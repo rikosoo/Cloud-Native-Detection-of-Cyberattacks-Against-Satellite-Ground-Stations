@@ -1,0 +1,9 @@
+region      = "sa-east-1"
+environment = "lab"
+station_id  = "SENTINEL-GS"
+alert_email = "you@example.com"
+
+# GuardDuty and Security Hub are account/region singletons: set these to false
+# if they are already enabled outside this stack.
+enable_guardduty    = true
+enable_security_hub = true

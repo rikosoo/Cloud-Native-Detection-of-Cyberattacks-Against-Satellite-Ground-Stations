@@ -1,0 +1,151 @@
+# Detection catalogue for the simulated ground station.
+#
+# Logic lives in gsd/detection/engine.py; everything tunable lives here so the
+# same file can be shipped to SSM Parameter Store and reloaded by the Lambda
+# detector without a code deploy.
+
+version: 1
+
+defaults:
+  # Sliding windows, in seconds.
+  login_correlation_window_s: 900
+  command_rate_window_s: 60
+  replay_memory_s: 86400
+
+rules:
+  # -- Identity / credential compromise --------------------------------
+  GS-AUTH-001:
+    title: Sign-in from untrusted network
+    severity: HIGH
+    technique: T1078.004
+    remediation: Revoke the session, rotate the operator credential, confirm the source netblock with the NOC.
+  GS-AUTH-002:
+    title: Privileged action without MFA
+    severity: HIGH
+    technique: T1078
+    remediation: Enforce an IAM condition requiring aws:MultiFactorAuthPresent on the operations role.
+  GS-AUTH-003:
+    title: Credential spraying against operator accounts
+    severity: MEDIUM
+    technique: T1110.003
+    params:
+      distinct_users: 3
+      window_s: 300
+    remediation: Block the source address at the edge and force a password rotation for the targeted users.
+  GS-AUTH-004:
+    title: Privilege escalation or persistence on the ground segment
+    severity: CRITICAL
+    technique: T1098.001
+    params:
+      actions:
+        - CreateAccessKey
+        - AttachUserPolicy
+        - PutUserPolicy
+        - CreateUser
+        - UpdateAssumeRolePolicy
+        - DeleteTrail
+        - StopLogging
+        - UpdateMissionProfile
+    remediation: Detach the policy, delete the access key, and restore CloudTrail logging immediately.
+  GS-AUTH-005:
+    title: Impossible travel between sign-ins
+    severity: HIGH
+    technique: T1078.004
+    params:
+      window_s: 3600
+    remediation: Treat both sessions as compromised until the operator confirms the activity.
+  GS-AUTH-006:
+    title: Operator activity outside duty hours
+    severity: LOW
+    technique: T1078
+    remediation: Correlate with the on-call roster before escalating.
+
+  # -- Commanding integrity --------------------------------------------
+  GS-CMD-001:
+    title: Telecommand authentication failure
+    severity: CRITICAL
+    technique: T1565.002
+    remediation: Halt the uplink, quarantine the frame, and verify the SDLS key state on both ends.
+  GS-CMD-002:
+    title: Telecommand outside the operator's authorised opcode set
+    severity: HIGH
+    technique: T1078
+    remediation: Reject the command and review the role-to-opcode mapping for the issuing identity.
+  GS-CMD-003:
+    title: Prohibited opcode issued from the operations console
+    severity: CRITICAL
+    technique: T1565.002
+    remediation: Inhibit the opcode at the uplink gateway; only the mission director may enable it.
+  GS-CMD-004:
+    title: Telecommand rate above the mission ceiling
+    severity: MEDIUM
+    technique: T1499
+    remediation: Throttle the uplink session and check for an automated commanding loop.
+  GS-CMD-005:
+    title: Critical opcode without dual authorisation
+    severity: HIGH
+    technique: T1078
+    remediation: Enforce two-person integrity for the critical opcode list.
+  GS-CMD-006:
+    title: Telecommand issued from an untrusted source address
+    severity: HIGH
+    technique: T1078.004
+    remediation: Restrict the uplink gateway security group to the operations CIDRs.
+
+  # -- Replay -----------------------------------------------------------
+  GS-RPL-001:
+    title: Telecommand sequence counter reuse
+    severity: CRITICAL
+    technique: T1557
+    remediation: Reject the frame; the on-board counter window must never accept a repeat.
+  GS-RPL-002:
+    title: Duplicate telecommand authentication tag
+    severity: CRITICAL
+    technique: T1557
+    remediation: Confirm anti-replay protection is enabled on the SDLS channel.
+  GS-RPL-003:
+    title: Stale telecommand timestamp
+    severity: HIGH
+    technique: T1557
+    params:
+      max_age_s: 30
+    remediation: Enforce a freshness window at the uplink gateway.
+
+  # -- Telemetry --------------------------------------------------------
+  GS-TLM-001:
+    title: Telemetry channel outside ICD limits
+    severity: HIGH
+    technique: T1565.001
+    remediation: Run the anomaly procedure for the affected subsystem.
+  GS-TLM-002:
+    title: Multivariate telemetry anomaly
+    severity: MEDIUM
+    technique: T1565.001
+    params:
+      consecutive: 3
+    remediation: Compare the flagged channels against the last authorised command sequence.
+
+  # -- Exfiltration -----------------------------------------------------
+  GS-EXF-001:
+    title: Downlink to an unapproved destination
+    severity: CRITICAL
+    technique: T1537
+    remediation: Block the destination, revoke the session, and preserve the transfer logs.
+  GS-EXF-002:
+    title: Downlink volume above the mission ceiling
+    severity: HIGH
+    technique: T1567.002
+    remediation: Compare the transfer against the pass schedule and the expected product size.
+  GS-EXF-003:
+    title: Bulk object access on the mission archive
+    severity: HIGH
+    technique: T1530
+    params:
+      object_threshold: 500
+      bytes_threshold: 1073741824
+    remediation: Enable S3 Block Public Access and review the bucket policy and access analyzer findings.
+  GS-EXF-004:
+    title: Data transfer outside the contact schedule
+    severity: MEDIUM
+    technique: T1029
+    remediation: Correlate with the AWS Ground Station contact schedule for the spacecraft.

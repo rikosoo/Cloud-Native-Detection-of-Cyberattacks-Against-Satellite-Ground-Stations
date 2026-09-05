@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+data/*.jsonl
+models/*.json
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+build/
+dist/
