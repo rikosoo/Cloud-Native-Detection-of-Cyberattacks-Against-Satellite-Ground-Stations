@@ -9,7 +9,7 @@ FINDINGS := $(DATA)/findings.jsonl
 MODEL    := $(MODELS)/telemetry.json
 MINUTES  ?= 1440
 
-.PHONY: help install test lint demo baseline events model detect evaluate asff pipeline clean layer
+.PHONY: help install test integration lint demo baseline events model detect evaluate asff pipeline clean layer
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -17,8 +17,12 @@ help:
 install: ## install the package with dev extras
 	$(PYTHON) -m pip install -e ".[dev]"
 
-test: ## run the test suite
+test: ## run the offline test suite
 	$(PYTHON) -m pytest -q
+
+integration: ## run the AWS integration tests against emulated services (moto)
+	@$(PYTHON) -c "import moto" 2>/dev/null || { echo "moto is missing: run 'make install'"; exit 1; }
+	$(PYTHON) -m pytest -q tests/test_integration_aws.py
 
 lint: ## static checks
 	$(PYTHON) -m ruff check src tests infra/lambda

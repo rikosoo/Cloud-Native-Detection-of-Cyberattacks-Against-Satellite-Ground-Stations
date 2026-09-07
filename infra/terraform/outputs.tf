@@ -29,3 +29,14 @@ output "alerts_topic_arn" {
 output "dashboard_url" {
   value = "https://${var.region}.console.aws.amazon.com/cloudwatch/home?region=${var.region}#dashboards:name=${aws_cloudwatch_dashboard.mission.dashboard_name}"
 }
+
+output "simulator_access_key_id" {
+  description = "Access key for the simulator user, when create_simulator_access_key is true."
+  value       = try(aws_iam_access_key.simulator[0].id, null)
+}
+
+output "simulator_secret_access_key" {
+  description = "Matching secret. Lab only -- prefer assuming a role."
+  value       = try(aws_iam_access_key.simulator[0].secret, null)
+  sensitive   = true
+}

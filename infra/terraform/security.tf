@@ -10,6 +10,19 @@ resource "aws_cloudtrail" "ground_segment" {
   cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.trail.arn}:*"
   cloud_watch_logs_role_arn  = aws_iam_role.trail_to_logs.arn
 
+  # Advanced event selectors REPLACE the default management-event selector, so
+  # this one has to be declared explicitly -- without it CloudTrail records no
+  # ConsoleLogin / CreateAccessKey / DeleteTrail at all and the whole GS-AUTH-*
+  # catalogue goes silent against a real account.
+  advanced_event_selector {
+    name = "management-events"
+
+    field_selector {
+      field  = "eventCategory"
+      equals = ["Management"]
+    }
+  }
+
   # Data events on the mission archive are what make bulk-exfiltration
   # detection (GS-EXF-003) possible at all.
   advanced_event_selector {

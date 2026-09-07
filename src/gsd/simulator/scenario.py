@@ -3,13 +3,40 @@
 from __future__ import annotations
 
 import random
-from datetime import datetime, timezone
+import re
+from datetime import datetime, timedelta, timezone
 
 from gsd.attacks import ALL_ATTACKS, REGISTRY, AttackContext
 from gsd.config import DEFAULT_PROFILE, MissionProfile
 from gsd.simulator.station import GroundStation, SimulationResult
 
 DEFAULT_START = datetime(2026, 3, 12, 0, 0, tzinfo=timezone.utc)
+
+_RELATIVE = re.compile(r"^-?(\d+)([mhd])$")
+_UNITS = {"m": "minutes", "h": "hours", "d": "days"}
+
+
+def parse_start(value: str) -> datetime:
+    """Resolve a ``--start`` argument to a UTC timestamp.
+
+    Accepts an ISO 8601 timestamp, ``now``, or an offset into the past written
+    as ``24h`` / ``90m`` / ``3d`` (a leading ``-`` is allowed but needs
+    ``--start=-24h``, since argparse reads a bare ``-24h`` as a flag).
+    Relative offsets matter for live pipelines:
+    CloudWatch Logs rejects anything older than 14 days, and Firehose partitions
+    the S3 archive by the event's own date.
+    """
+    value = value.strip()
+    if value == "now":
+        return datetime.now(timezone.utc)
+
+    match = _RELATIVE.match(value)
+    if match:
+        amount, unit = int(match.group(1)), match.group(2)
+        return datetime.now(timezone.utc) - timedelta(**{_UNITS[unit]: amount})
+
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
 
 
 def run_scenario(

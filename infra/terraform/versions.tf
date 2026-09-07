@@ -18,9 +18,9 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project    = "ground-station-detection"
-      Mission    = var.station_id
-      ManagedBy  = "terraform"
+      Project     = "ground-station-detection"
+      Mission     = var.station_id
+      ManagedBy   = "terraform"
       Environment = var.environment
     }
   }

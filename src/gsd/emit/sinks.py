@@ -47,11 +47,22 @@ class FileSink(Sink):
         return count
 
 
+class RejectedLogEvents(RuntimeError):
+    """PutLogEvents silently dropped part of a batch."""
+
+
 class CloudWatchLogsSink(Sink):
     """Ships events to a CloudWatch Logs stream (one JSON document per line).
 
     A metric filter on the log group turns any finding into a CloudWatch alarm,
     and a subscription filter forwards the same records to the detector Lambda.
+
+    CloudWatch Logs rejects events whose timestamp is more than 14 days in the
+    past or 2 hours in the future, and it does so *inside a successful
+    response*: the API returns 200 with a ``rejectedLogEventsInfo`` block and the
+    records are gone. Silent loss is unacceptable in a detection pipeline, so
+    this sink raises instead. Generate the timeline with a recent start
+    (``gsd simulate --start -24h``) when feeding a live log group.
     """
 
     MAX_BATCH = 1000
@@ -96,11 +107,18 @@ class CloudWatchLogsSink(Sink):
     def _flush(self, batch: list[dict[str, Any]]) -> int:
         if not batch:
             return 0
-        self.client.put_log_events(
+        response = self.client.put_log_events(
             logGroupName=self.log_group,
             logStreamName=self.log_stream,
             logEvents=sorted(batch, key=lambda r: r["timestamp"]),
         )
+        rejected = response.get("rejectedLogEventsInfo") or {}
+        if rejected:
+            raise RejectedLogEvents(
+                f"CloudWatch Logs dropped part of a {len(batch)}-event batch: {rejected}. "
+                "Timestamps must be within the last 14 days and under 2 hours ahead; "
+                "regenerate with 'gsd simulate --start -24h'."
+            )
         return len(batch)
 
 

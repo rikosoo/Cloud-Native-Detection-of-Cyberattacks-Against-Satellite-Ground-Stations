@@ -44,5 +44,12 @@ score → deploy. What follows is deliberately *not* built yet, with the reason.
 3. Lambda per-container state (rate windows, anomaly streaks) is
    shard-sticky rather than guaranteed. A shard rebalance can reset a streak.
    Only the replay memory is made globally consistent, because only it must be.
-4. Terraform is validated in CI but has not been applied against a live account
-   in this repository's history — treat the first `apply` as a review step.
+4. Terraform has never been applied against a live account, and could not even
+   be `terraform validate`d in the environment this repo was built in (the
+   provider registry was unreachable). It is `fmt`-clean and reviewed by hand;
+   CI runs `validate` where the registry is reachable. Treat the first `apply`
+   as a review step.
+5. The emulated-AWS suite uses moto, which is faithful about API shapes and
+   about the behaviours this project depends on (conditional writes, rejected
+   log events, ASFF acceptance) but is not AWS. It cannot catch IAM policy
+   mistakes, service quotas, or eventual consistency.

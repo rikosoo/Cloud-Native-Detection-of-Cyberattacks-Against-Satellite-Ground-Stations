@@ -104,6 +104,13 @@ resource "aws_iam_user" "simulator" {
   name = "${local.prefix}-simulator"
 }
 
+# Long-lived keys land in Terraform state in plaintext, so this is opt-in and
+# lab-only. In any other environment, assume a role instead.
+resource "aws_iam_access_key" "simulator" {
+  count = var.create_simulator_access_key ? 1 : 0
+  user  = aws_iam_user.simulator.name
+}
+
 resource "aws_iam_user_policy" "simulator" {
   name = "${local.prefix}-simulator"
   user = aws_iam_user.simulator.name

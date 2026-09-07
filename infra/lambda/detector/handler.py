@@ -16,7 +16,6 @@ import gzip
 import json
 import logging
 import os
-from collections.abc import Iterator
 from typing import Any
 
 import boto3
@@ -70,23 +69,43 @@ def _engine() -> DetectionEngine:
     return _ENGINE
 
 
-def _decode(event: dict[str, Any]) -> Iterator[dict[str, Any]]:
-    """Yield raw event documents from Kinesis or a CloudWatch Logs subscription."""
+def _decode(event: dict[str, Any]) -> tuple[list[Event], list[str]]:
+    """Parse a Kinesis batch or a CloudWatch Logs subscription.
+
+    Returns the events that parsed plus the Kinesis sequence numbers that did
+    not. A single malformed record must not sink the batch: the event source
+    mapping is configured with ``ReportBatchItemFailures``, so naming the bad
+    sequence numbers lets Lambda retry only those and keeps the good detections.
+    """
+    events: list[Event] = []
+    failures: list[str] = []
+
     if "awslogs" in event:  # CloudWatch Logs subscription filter
         raw = gzip.decompress(base64.b64decode(event["awslogs"]["data"]))
         for log_event in json.loads(raw).get("logEvents", []):
-            yield json.loads(log_event["message"])
-        return
+            try:
+                events.append(Event.from_dict(json.loads(log_event["message"])))
+            except Exception:
+                LOG.exception("undecodable log event %s", log_event.get("id"))
+        return events, failures
 
     for record in event.get("Records", []):
-        payload = record.get("kinesis", {}).get("data")
-        if payload is None:  # SQS / direct invoke
-            payload_text = record.get("body", json.dumps(record))
-        else:
-            payload_text = base64.b64decode(payload).decode("utf-8")
-        for line in payload_text.splitlines():
-            if line.strip():
-                yield json.loads(line)
+        sequence_number = record.get("kinesis", {}).get("sequenceNumber", "")
+        try:
+            payload = record.get("kinesis", {}).get("data")
+            if payload is None:  # SQS / direct invoke
+                payload_text = record.get("body", json.dumps(record))
+            else:
+                payload_text = base64.b64decode(payload).decode("utf-8")
+            for line in payload_text.splitlines():
+                if line.strip():
+                    events.append(Event.from_dict(json.loads(line)))
+        except Exception:
+            LOG.exception("undecodable record %s", sequence_number)
+            if sequence_number:
+                failures.append(sequence_number)
+
+    return events, failures
 
 
 def _emit_metrics(findings: list[Any], processed: int) -> None:
@@ -121,7 +140,7 @@ def _emit_metrics(findings: list[Any], processed: int) -> None:
 
 def handler(event: dict[str, Any], context: Any = None) -> dict[str, Any]:
     engine = _engine()
-    events = [Event.from_dict(doc) for doc in _decode(event)]
+    events, failures = _decode(event)
     findings = engine.run(events)
 
     imported = failed = 0
@@ -135,8 +154,9 @@ def handler(event: dict[str, Any], context: Any = None) -> dict[str, Any]:
 
     _emit_metrics(findings, len(events))
     LOG.info(
-        "processed=%s findings=%s imported=%s failed=%s rules=%s",
+        "processed=%s undecodable=%s findings=%s imported=%s failed=%s rules=%s",
         len(events),
+        len(failures),
         len(findings),
         imported,
         failed,
@@ -147,4 +167,6 @@ def handler(event: dict[str, Any], context: Any = None) -> dict[str, Any]:
         "findings": len(findings),
         "imported": imported,
         "failed": failed,
+        # Consumed by the event source mapping's ReportBatchItemFailures.
+        "batchItemFailures": [{"itemIdentifier": sequence} for sequence in failures],
     }

@@ -105,8 +105,12 @@ cd infra/terraform
 cp terraform.tfvars.example terraform.tfvars # set region, station, alert email
 terraform init && terraform apply
 
-# feed the deployed pipeline
-gsd simulate --sink kinesis:$(terraform output -raw event_stream_name)
+# upload the baseline model the detector Lambda reads at cold start
+aws s3 cp ../../models/telemetry.json "s3://$(terraform output -raw model_bucket)/models/telemetry.json"
+
+# feed the deployed pipeline -- note the relative start: CloudWatch Logs rejects
+# events older than 14 days, and Firehose partitions S3 by the event's own date
+gsd simulate --start 24h --sink kinesis:$(terraform output -raw event_stream_name)
 ```
 
 Terraform provisions: Kinesis + Firehose → S3 archive, the detector Lambda
@@ -114,6 +118,19 @@ Terraform provisions: Kinesis + Firehose → S3 archive, the detector Lambda
 an EventBridge rule, a DynamoDB replay table, CloudTrail with S3 data events,
 GuardDuty, Security Hub with FSBP, CloudWatch alarms (critical finding,
 telemetry gap, detector errors), an SNS topic and a dashboard.
+
+## Testing
+
+```bash
+make test         # 29 offline unit tests
+make integration  # 8 tests against emulated AWS (moto): Kinesis batching, both
+                  # Lambda envelopes, DynamoDB replay memory, ASFF round trip
+make demo         # the detection scorecard, which CI gates on
+```
+
+The integration suite exists because a class of bugs only appears on the cloud
+path — partial-batch failures, log-event rejection, state that has to survive a
+cold start. It runs in-process with no credentials and no network.
 
 ## Documentation
 
@@ -142,3 +159,9 @@ lab constants, the orbit model is a sine wave, and the "attacks" are injected
 into a synthetic timeline rather than executed against real infrastructure. The
 detection logic, the AWS wiring and the evaluation methodology are the parts
 meant to survive contact with reality.
+
+**Verification status.** The Python pipeline and the cloud-path code are tested
+(37 tests, including the emulated-AWS suite). The Terraform is
+`fmt`-clean and reviewed, but has **not** been `terraform validate`d or applied
+against a live account — treat the first `apply` as a review step, and expect to
+pay for GuardDuty, Security Hub and CloudTrail data events while it is up.

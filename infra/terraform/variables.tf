@@ -63,3 +63,9 @@ variable "lambda_layer_zip" {
   type        = string
   default     = "../../build/gsd-layer.zip"
 }
+
+variable "create_simulator_access_key" {
+  description = "Create a long-lived access key for the simulator user. Lab only: the secret is stored in Terraform state."
+  type        = bool
+  default     = false
+}

@@ -15,7 +15,7 @@ from gsd.detection.evaluate import evaluate
 from gsd.detection.finding import Finding
 from gsd.detection.ml import TelemetryModel, fit_from_events
 from gsd.events import read_jsonl
-from gsd.simulator.scenario import DEFAULT_START, run_scenario
+from gsd.simulator.scenario import DEFAULT_START, parse_start, run_scenario
 
 
 def _write_findings(findings: list[Finding], path: str) -> None:
@@ -38,7 +38,8 @@ def cmd_simulate(args: argparse.Namespace) -> int:
     attacks = None
     if args.attacks:
         attacks = [] if args.attacks == ["none"] else args.attacks
-    result = run_scenario(minutes=args.minutes, seed=args.seed, attacks=attacks, start=DEFAULT_START)
+    start = parse_start(args.start) if args.start else DEFAULT_START
+    result = run_scenario(minutes=args.minutes, seed=args.seed, attacks=attacks, start=start)
 
     from gsd.emit import build_sink
 
@@ -167,6 +168,14 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="*",
         choices=[*REGISTRY, "none"],
         help="attacks to inject (default: all; 'none' for a clean baseline)",
+    )
+    sim.add_argument(
+        "--start",
+        help=(
+            "timeline start: ISO 8601, 'now', or an offset into the past (24h, 90m, 3d). "
+            "Defaults to a fixed date so runs are reproducible; use a relative offset when "
+            "feeding CloudWatch Logs, which rejects events older than 14 days."
+        ),
     )
     sim.add_argument("--out", help="write JSONL to this path")
     sim.add_argument(

@@ -109,6 +109,21 @@ nobody can explain at 03:00 is not an improvement.
 | CloudWatch | embedded metrics, alarms (critical finding, telemetry gap, errors) |
 | SNS | on-call notification |
 
+## What the cloud path adds, and how it is tested
+
+Three behaviours exist only once the code runs in AWS, and each one broke the
+first time it was exercised against emulated services:
+
+| Behaviour | Failure it caused | Fix |
+|---|---|---|
+| `PutLogEvents` rejects events older than 14 days *inside a 200 response* | the simulator's reproducible 2026-03-12 timeline vanished into an empty log group, exit code 0 | `CloudWatchLogsSink` raises `RejectedLogEvents`; `gsd simulate --start 24h` generates a timeline that ends now |
+| CloudTrail advanced event selectors replace the default management selector | a data-events-only selector would have logged no `ConsoleLogin` or `CreateAccessKey` at all, silently disabling every `GS-AUTH-*` rule | an explicit `management-events` selector alongside the data one |
+| `ReportBatchItemFailures` needs the handler to return `batchItemFailures` | one malformed record would have failed and retried the entire 200-record batch | per-record decode, failed sequence numbers reported individually |
+
+`tests/test_integration_aws.py` covers all three plus the DynamoDB replay memory
+across a simulated cold start. It runs in-process against moto, so it needs no
+credentials and no network, and runs in CI on every push.
+
 ## State and scaling
 
 The engine keeps three kinds of state:
