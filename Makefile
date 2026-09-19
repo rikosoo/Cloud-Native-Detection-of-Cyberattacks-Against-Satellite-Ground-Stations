@@ -9,7 +9,7 @@ FINDINGS := $(DATA)/findings.jsonl
 MODEL    := $(MODELS)/telemetry.json
 MINUTES  ?= 1440
 
-.PHONY: help install test integration lint demo baseline events model detect evaluate asff pipeline clean layer
+.PHONY: help install test integration lint demo paper paper-experiments baseline events model detect evaluate asff pipeline clean layer
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -52,6 +52,12 @@ asff: detect ## render the findings as ASFF (Security Hub format)
 	$(PYTHON) -m gsd.cli asff --findings $(FINDINGS) --out $(DATA)/asff.json
 
 pipeline: evaluate asff ## full offline pipeline
+
+paper-experiments: ## regenerate every figure, table and number used by the paper
+	$(PYTHON) paper/experiments.py
+
+paper: ## regenerate the experiments and build both manuscripts (needs LaTeX)
+	$(MAKE) -C paper all PYTHON=$(PYTHON)
 
 layer: ## build the Lambda layer for deployment
 	./infra/build_layer.sh

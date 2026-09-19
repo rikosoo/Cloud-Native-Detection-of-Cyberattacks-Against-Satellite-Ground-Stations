@@ -4,6 +4,11 @@ A simulated satellite ground station, five emulated attack scenarios, and a
 cloud-native detection pipeline that finds them — running end to end offline on
 a laptop, and deployable to AWS with Terraform.
 
+**📄 Paper:** [`paper/main.pdf`](paper/main.pdf) (English) ·
+[`paper/main-pt.pdf`](paper/main-pt.pdf) (português) — *An Open, Labelled
+Testbed and Two Negative Results.* Every number and figure in it is regenerated
+by `make paper-experiments`.
+
 The ground segment is the soft underbelly of a space mission: the spacecraft is
 hard to reach, but the station that commands it is an ordinary cloud workload
 with operators, credentials, APIs and buckets. This project makes that attack
@@ -122,18 +127,43 @@ telemetry gap, detector errors), an SNS topic and a dashboard.
 ## Testing
 
 ```bash
-make test         # 29 offline unit tests
-make integration  # 8 tests against emulated AWS (moto): Kinesis batching, both
-                  # Lambda envelopes, DynamoDB replay memory, ASFF round trip
-make demo         # the detection scorecard, which CI gates on
+make test              # 29 offline unit tests
+make integration       # 8 tests against emulated AWS (moto): Kinesis batching,
+                       # both Lambda envelopes, DynamoDB replay memory, ASFF
+make demo              # the detection scorecard, which CI gates on
+make paper-experiments # the full 20-trial evaluation behind the paper
 ```
 
 The integration suite exists because a class of bugs only appears on the cloud
 path — partial-batch failures, log-event rejection, state that has to survive a
 cold start. It runs in-process with no credentials and no network.
 
+## Paper
+
+The evaluation is written up as a conference-format paper in [`paper/`](paper/),
+in English and Portuguese. Its headline results over 20 independent trials:
+
+| | |
+|---|---|
+| All five scenarios detected | in 20/20 trials, precision 0.997 ± 0.002 |
+| False positives | 0.06% of benign events, concentrated in two named rules |
+| Learned baseline vs. spacecraft limits | fires 42 ± 2 min earlier |
+| Multivariate vs. best single channel | AUC 0.996 vs 0.998 — **no advantage** |
+| Phase-swap probe (replayed telemetry) | AUC 0.32 — **below chance, both detectors** |
+| Baseline shorter than one diurnal cycle | telemetry FPR 0.2% → 77% |
+| Cost | ~9.5 µs/event single core, 1.5 KB model |
+
+The last three are the interesting ones, and two of them contradict the design
+rationale this project started from. The rules — not the model — carry the
+high-impact scenarios; the model earns its place on exactly one of the five; and
+an adversary who replays valid telemetry from a different orbit phase hides
+*inside* the learned baseline and drives its anomaly score down. That last
+failure is structural to any phase-marginal baseline, and
+[the probe that finds it](paper/experiments.py) is a few lines long.
+
 ## Documentation
 
+* [`paper/README.md`](paper/README.md) — the paper, the experiment harness, how to rebuild both PDFs
 * [`docs/architecture.md`](docs/architecture.md) — components, data flow, why each AWS service is there
 * [`docs/threat-model.md`](docs/threat-model.md) — assets, adversaries, attack paths, SPARTA/ATT&CK mapping
 * [`docs/detections.md`](docs/detections.md) — the rule catalogue in detail, with evasion notes
@@ -143,6 +173,7 @@ cold start. It runs in-process with no credentials and no network.
 ## Repository layout
 
 ```
+paper/               the manuscript (en/pt), figures, and the experiment harness
 src/gsd/simulator/   ground station: spacecraft model, commanding, identity, downlink
 src/gsd/attacks/     five adversary-emulation scenarios
 src/gsd/detection/   rules engine, baseline model, ASFF mapping, evaluation
@@ -161,7 +192,8 @@ detection logic, the AWS wiring and the evaluation methodology are the parts
 meant to survive contact with reality.
 
 **Verification status.** The Python pipeline and the cloud-path code are tested
-(37 tests, including the emulated-AWS suite). The Terraform is
+(37 tests, including the emulated-AWS suite), and the paper's claims are
+regenerated from the code on every build. The Terraform is
 `fmt`-clean and reviewed, but has **not** been `terraform validate`d or applied
 against a live account — treat the first `apply` as a review step, and expect to
 pay for GuardDuty, Security Hub and CloudTrail data events while it is up.

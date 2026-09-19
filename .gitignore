@@ -13,3 +13,14 @@ models/*.json
 .terraform.lock.hcl
 build/
 dist/
+
+# LaTeX build artefacts (the PDFs themselves are committed)
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out
+paper/*.synctex.gz
+paper/*.run.xml

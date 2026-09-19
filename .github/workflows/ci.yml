@@ -52,3 +52,41 @@ jobs:
         run: |
           terraform -chdir=infra/terraform init -backend=false
           terraform -chdir=infra/terraform validate
+
+  paper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: python -m pip install -e ".[paper]"
+
+      - name: TeX Live
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            texlive-latex-base texlive-latex-recommended texlive-fonts-recommended \
+            texlive-latex-extra texlive-publishers texlive-lang-portuguese latexmk
+
+      # Rebuilds the figures, tables and macros from scratch and then both
+      # manuscripts: a change that moves a number cannot leave the paper stale.
+      - name: Regenerate results and build both PDFs
+        run: make -C paper all
+
+      - name: Fail if a generated artefact drifted from the committed one
+        run: |
+          git diff --stat -- paper/data paper/figures
+          git diff --quiet -- paper/data/table_corpus.tex || {
+            echo "committed tables differ from a fresh run"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: papers
+          path: |
+            paper/main.pdf
+            paper/main-pt.pdf
