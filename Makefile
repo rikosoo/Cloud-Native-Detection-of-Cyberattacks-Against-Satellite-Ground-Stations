@@ -9,7 +9,7 @@ FINDINGS := $(DATA)/findings.jsonl
 MODEL    := $(MODELS)/telemetry.json
 MINUTES  ?= 1440
 
-.PHONY: help install test integration lint demo paper paper-experiments baseline events model detect evaluate asff pipeline clean layer
+.PHONY: help install test integration lint demo paper paper-experiments ieee ieee-package baseline events model detect evaluate asff pipeline clean layer
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -58,6 +58,12 @@ paper-experiments: ## regenerate every figure, table and number used by the pape
 
 paper: ## regenerate the experiments and build both manuscripts (needs LaTeX)
 	$(MAKE) -C paper all PYTHON=$(PYTHON)
+
+ieee: ## build the IEEE submission manuscript and check it against the rules
+	$(MAKE) -C IEEE all PYTHON=$(PYTHON)
+
+ieee-package: ## assemble the upload-ready submission directory
+	$(MAKE) -C IEEE package PYTHON=$(PYTHON)
 
 layer: ## build the Lambda layer for deployment
 	./infra/build_layer.sh

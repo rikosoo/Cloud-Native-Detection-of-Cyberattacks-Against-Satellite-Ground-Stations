@@ -1007,8 +1007,9 @@ TABLE_STRINGS = {
         "eff_caption": (
             "Effectiveness over {seeds} independent trials. Detection rate is the "
             "percentage of trials in which the scenario produced at least one "
-            "finding; recall is per labelled event. The last two columns give "
-            "recall for the ablated configurations."
+            "finding; recall is per labelled event, for the full pipeline "
+            "(\\emph{{both}}) and for each ablated half. Standard deviations are "
+            "below 0.01 for every scenario."
         ),
         "scenario": "Scenario",
         "det": "Det.",
@@ -1056,8 +1057,9 @@ TABLE_STRINGS = {
         "eff_caption": (
             "Eficácia ao longo de {seeds} execuções independentes. A taxa de "
             "detecção é o percentual de execuções em que o cenário produziu ao "
-            "menos um achado; a revocação é por evento rotulado. As duas últimas "
-            "colunas dão a revocação das configurações ablacionadas."
+            "menos um achado; a revocação é por evento rotulado, para a pipeline "
+            "completa (\\emph{{both}}) e para cada metade ablacionada. Os desvios "
+            "padrão são inferiores a 0,01 em todos os cenários."
         ),
         "scenario": "Cenário",
         "det": "Det.",
@@ -1145,7 +1147,16 @@ def table_corpus(results: dict[str, Any], lang: str) -> None:
 
 
 def table_effectiveness(results: dict[str, Any], lang: str) -> None:
+    """Per-scenario effectiveness.
+
+    Sized for a single column: the monospaced scenario identifiers and a
+    per-cell standard deviation overflow a 3.5-inch column, so the labels are
+    plain text and the (uniformly tiny) spread is stated in the caption.
+    """
     T = TABLE_STRINGS[lang]
+    labels = {
+        name: scenario_labels(lang)[name].replace("\n", " ") for name in SCENARIOS
+    }
     eff = results["effectiveness"]
     rows = []
     for name in SCENARIOS:
@@ -1154,11 +1165,11 @@ def table_effectiveness(results: dict[str, Any], lang: str) -> None:
         model = eff["ml"]["scenarios"][name]
         mttd = combined["mttd_s"]["mean"]
         rows.append(
-            f"{TEX_SCENARIO[name]} & {combined['detection_rate'] * 100:.0f} & "
+            f"{labels[name]} & {combined['detection_rate'] * 100:.0f} & "
             + decimal(
                 lang,
-                f"${combined['recall']['mean']:.2f} \\pm {combined['recall']['sd']:.2f}$ & "
-                f"{rules['recall']['mean']:.2f} & {model['recall']['mean']:.2f} & ",
+                f"{combined['recall']['mean']:.2f} & {rules['recall']['mean']:.2f} & "
+                f"{model['recall']['mean']:.2f} & ",
             )
             + ("0" if mttd < 1 else f"{mttd:.0f}")
             + " \\\\"
@@ -1173,11 +1184,12 @@ def table_effectiveness(results: dict[str, Any], lang: str) -> None:
 \\caption{{{caption}}}
 \\label{{tab:effectiveness}}
 \\centering
-\\begin{{tabular}}{{@{{}}lrcrrr@{{}}}}
+\\footnotesize
+\\begin{{tabular}}{{@{{}}lrrrrr@{{}}}}
 \\toprule
- & \\textbf{{{T['det']}}} & \\textbf{{{T['recall']}}} & \\multicolumn{{2}}{{c}}{{\\textbf{{{T['recall_ablated']}}}}} & \\textbf{{{T['mttd']}}} \\\\
-\\cmidrule(lr){{4-5}}
-\\textbf{{{T['scenario']}}} & \\textbf{{\\%}} & \\textbf{{{T['rules_model']}}} & \\textbf{{{T['rules']}}} & \\textbf{{{T['model']}}} & \\textbf{{(s)}} \\\\
+ & \\textbf{{{T['det']}}} & \\multicolumn{{3}}{{c}}{{\\textbf{{{T['recall']}}}}} & \\textbf{{{T['mttd']}}} \\\\
+\\cmidrule(lr){{3-5}}
+\\textbf{{{T['scenario']}}} & \\textbf{{\\%}} & \\textbf{{both}} & \\textbf{{{T['rules']}}} & \\textbf{{{T['model']}}} & \\textbf{{(s)}} \\\\
 \\midrule
 {chr(10).join(rows)}
 \\midrule

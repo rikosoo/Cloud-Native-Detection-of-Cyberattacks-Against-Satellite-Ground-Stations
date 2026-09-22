@@ -24,3 +24,12 @@ paper/*.log
 paper/*.out
 paper/*.synctex.gz
 paper/*.run.xml
+IEEE/*.aux
+IEEE/*.bbl
+IEEE/*.blg
+IEEE/*.fdb_latexmk
+IEEE/*.fls
+IEEE/*.log
+IEEE/*.out
+IEEE/*.synctex.gz
+IEEE/package/

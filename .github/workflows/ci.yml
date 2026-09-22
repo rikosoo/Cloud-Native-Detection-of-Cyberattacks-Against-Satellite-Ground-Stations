@@ -84,9 +84,16 @@ jobs:
           git diff --quiet -- paper/data/table_corpus.tex || {
             echo "committed tables differ from a fresh run"; exit 1; }
 
+      # The journal version has hard limits -- page count, abstract length --
+      # that are cheap to break by accident and expensive to discover at the
+      # submission desk.
+      - name: Build the IEEE submission and check its formatting rules
+        run: make -C IEEE all
+
       - uses: actions/upload-artifact@v4
         with:
           name: papers
           path: |
             paper/main.pdf
             paper/main-pt.pdf
+            IEEE/main.pdf

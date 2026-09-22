@@ -7,7 +7,8 @@ a laptop, and deployable to AWS with Terraform.
 **📄 Paper:** [`paper/main.pdf`](paper/main.pdf) (English) ·
 [`paper/main-pt.pdf`](paper/main-pt.pdf) (português) — *An Open, Labelled
 Testbed and Two Negative Results.* Every number and figure in it is regenerated
-by `make paper-experiments`.
+by `make paper-experiments`. An 8-page journal-format submission package lives
+in [`IEEE/`](IEEE/).
 
 The ground segment is the soft underbelly of a space mission: the spacecraft is
 hard to reach, but the station that commands it is an ordinary cloud workload
@@ -164,6 +165,7 @@ failure is structural to any phase-marginal baseline, and
 ## Documentation
 
 * [`paper/README.md`](paper/README.md) — the paper, the experiment harness, how to rebuild both PDFs
+* [`IEEE/README.md`](IEEE/README.md) — journal submission package: formatting compliance, page-charge maths, and why the venue matters more than the formatting
 * [`docs/architecture.md`](docs/architecture.md) — components, data flow, why each AWS service is there
 * [`docs/threat-model.md`](docs/threat-model.md) — assets, adversaries, attack paths, SPARTA/ATT&CK mapping
 * [`docs/detections.md`](docs/detections.md) — the rule catalogue in detail, with evasion notes
@@ -174,6 +176,7 @@ failure is structural to any phase-marginal baseline, and
 
 ```
 paper/               the manuscript (en/pt), figures, and the experiment harness
+IEEE/                the same paper trimmed and formatted for a journal submission
 src/gsd/simulator/   ground station: spacecraft model, commanding, identity, downlink
 src/gsd/attacks/     five adversary-emulation scenarios
 src/gsd/detection/   rules engine, baseline model, ASFF mapping, evaluation

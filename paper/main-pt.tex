@@ -229,7 +229,8 @@ SPARTA~\cite{sparta} e ATT\&CK~\cite{attack}.
 \caption{Caminhos de ataque emulados, a fronteira de confiança que cada um atravessa e o mapeamento para os arcabouços.}
 \label{tab:paths}
 \centering
-\begin{tabular}{@{}llllp{0.40\textwidth}@{}}
+\footnotesize
+\begin{tabular}{@{}llllp{0.35\textwidth}@{}}
 \toprule
 \textbf{Cenário} & \textbf{Fronteira} & \textbf{SPARTA} & \textbf{ATT\&CK} & \textbf{Ação do adversário} \\
 \midrule
@@ -448,18 +449,19 @@ mesmo pacote que a ferramenta \emph{offline} importa.
 \caption{Mapeamento de implantação.}
 \label{tab:aws}
 \centering
+\footnotesize
 \begin{tabular}{@{}ll@{}}
 \toprule
 \textbf{Estágio} & \textbf{Serviço} \\
 \midrule
-Ingestão & Kinesis Data Streams (particionado por estação) \\
-Arquivo bruto & Firehose $\rightarrow$ S3, GZIP, escalonado ao Glacier \\
+Ingestão & Kinesis Data Streams (por estação) \\
+Arquivo bruto & Firehose $\rightarrow$ S3, GZIP, movido ao Glacier \\
 Detecção & Lambda, \texttt{ReportBatchItemFailures} \\
 Memória de \emph{replay} & DynamoDB, escrita condicional $+$ TTL \\
-Plano de identidade & CloudTrail, eventos de gestão $+$ dados do S3 \\
+Plano de identidade & CloudTrail, gestão $+$ dados do S3 \\
 Detecção nativa & GuardDuty, repontuado por um Lambda \\
 Repositório de achados & Security Hub (ASFF~\cite{asff}) \\
-Alerta & Métricas embutidas do CloudWatch, alarmes, SNS \\
+Alerta & Métricas embutidas, alarmes, SNS \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -957,7 +959,7 @@ melhorada.
 O simulador, os cenários de ataque, o motor de detecção, o código de
 infraestrutura, o arcabouço experimental e as fontes deste manuscrito estão
 disponíveis em
-\url{https://github.com/rikosoo/Cloud-Native-Detection-of-Cyberattacks-Against-Satellite-Ground-Stations}.
+\url{https://github.com/rikosoo/Cloud-Native-Detection-of-\allowbreak Cyberattacks-Against-Satellite-Ground-Stations}.
 Executar \texttt{python paper/experiments.py} regenera todos os números e
 figuras deste artigo.
 
