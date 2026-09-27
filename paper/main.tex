@@ -65,8 +65,8 @@ design rationale we started from. First, the multivariate model does not beat a
 well-calibrated per-channel detector on that drift
 ($\mathrm{AUC}\ \expAucMulti \pm \expAucMultiSD$ versus
 $\expAucUni \pm \expAucUniSD$). Second, a controlled probe that preserves every
-marginal distribution while destroying the joint structure --- replaying
-housekeeping frames from half an orbit earlier --- is invisible to both
+marginal distribution while destroying the joint structure, by replaying
+housekeeping frames from half an orbit earlier, is invisible to both
 detectors ($\mathrm{AUC}\ \expAucSwapMulti$ and \expAucSwapUni{}, detected in
 \expSwapDetectedMulti{} of \expNumSeeds{} trials), because a baseline fitted
 over a whole orbit marginalises away the very phase information the attack
@@ -99,14 +99,14 @@ followed, with Space Policy Directive-5 naming the ground segment explicitly as
 part of the protected system~\cite{spd5}, and the community now has a
 space-specific adversary taxonomy in SPARTA~\cite{sparta}.
 
-What is missing is the thing that made progress possible in network intrusion
+What is missing is what made progress possible in network intrusion
 detection: an open corpus with ground truth. Surveys of network IDS datasets
 list dozens of options~\cite{ring2019datasets}; for the satellite ground segment
 there is, to our knowledge, none. Ground-segment telemetry and audit logs are
 operationally sensitive and rarely published, and when they are, they are
 unlabelled. The practical consequence is that ground-segment detection claims
-cannot be compared, and that a detector's cost --- in false positives, in
-analyst time, in compute --- is usually not reported at all.
+cannot be compared, and that a detector's cost in false positives, analyst
+time and compute is usually not reported at all.
 
 This paper contributes a testbed and an evaluation rather than a new detector.
 Concretely:
@@ -114,9 +114,9 @@ Concretely:
 \begin{itemize}
   \item \textbf{An open, labelled ground-station corpus generator}
   (Section~\ref{sec:impl}). A simulated station emits four correlated planes of
-  evidence, and five adversary-emulation scenarios --- credential compromise,
+  evidence, and five adversary-emulation scenarios (credential compromise,
   telecommand tampering, replay, sub-threshold behavioural drift and bulk
-  exfiltration --- inject themselves into that timeline, labelling every event
+  exfiltration) inject themselves into that timeline, labelling every event
   they create or modify. Scenarios compose: the stolen session established by
   the credential stage is the one the tampering and exfiltration stages reuse.
 
@@ -143,7 +143,7 @@ We organise the evaluation around five questions:
 \begin{description}
   \item[RQ1] Does the pipeline detect each scenario, and at what precision?
   \item[RQ2] What does the learned baseline add over the spacecraft's own limit
-  checks --- the alternative a real mission already operates?
+  checks, the alternative a real mission already operates?
   \item[RQ3] Does the multivariate model add anything over a well-calibrated
   per-channel detector?
   \item[RQ4] How much clean telemetry does the baseline need before it is
@@ -161,9 +161,9 @@ spacecraft state into archived data products. Four kinds of record are produced,
 and a detector needs all four:
 
 \begin{enumerate}
-  \item \emph{Telemetry.} Spacecraft housekeeping --- bus voltage and current,
-  battery state of charge, amplifier and battery temperatures, link margin ---
-  downlinked continuously during a contact.
+  \item \emph{Telemetry.} Spacecraft housekeeping channels downlinked
+  continuously during a contact: bus voltage and current, battery state of
+  charge, amplifier and battery temperatures, link margin.
   \item \emph{Telecommands.} CCSDS TC frames~\cite{ccsds232}, authenticated in
   modern missions by the Space Data Link Security protocol~\cite{ccsds355},
   which supplies a keyed authentication tag and an anti-replay sequence counter.
@@ -194,7 +194,7 @@ construction.
 
 \emph{State-sponsored.} Patient, mission-aware, targets key material and the
 commanding path, disables logging early, and prefers degradation that is
-indistinguishable from a bus fault --- because an operator who believes the
+indistinguishable from a bus fault, because an operator who believes the
 spacecraft is unhealthy will act on the wrong runbook.
 
 \subsection{Trust boundaries and attack paths}
@@ -255,9 +255,9 @@ runs unchanged in the offline command-line tool, in the test suite, and inside
 an AWS Lambda function. Cloud services are reached only through an event sink
 interface and a state-store interface.
 
-\emph{Offline first.} The full pipeline --- generate, fit, detect, score ---
-runs with NumPy and a YAML parser, with no credentials and no network. This is
-what makes the artefact reproducible by a reader who has no AWS account.
+\emph{Offline first.} The full pipeline of generate, fit, detect and score
+runs with NumPy and a YAML parser, with no credentials and no network, so a
+reader without an AWS account can reproduce the artefact.
 
 \emph{Measured, not asserted.} Every injected event carries a ground-truth
 label, so precision, recall and detection latency are computed rather than
@@ -333,9 +333,10 @@ and authentication tags over the full anti-replay window of 24 hours.
 Only the last horizon must be globally consistent. A replayed frame was accepted
 hours earlier, quite possibly by a different Lambda invocation on a different
 shard, so replay detection is the one rule that cannot be answered from a single
-batch. The engine therefore addresses a \emph{replay memory} interface --- a
-dictionary offline, and in the cloud a DynamoDB table with a time-to-live and a
-conditional write, which makes the deduplication race-free without a lock.
+batch. The engine therefore addresses a \emph{replay memory} interface, backed
+by a dictionary offline and in the cloud by a DynamoDB table with a time-to-live
+and a conditional write, which makes the deduplication race-free without a
+lock.
 
 \subsection{Telemetry baseline}
 \label{sec:model}
@@ -386,10 +387,10 @@ The simulated spacecraft is a 95-minute low-Earth orbit with a 35\% eclipse
 fraction and an 11-minute contact window per orbit. The bus model is small but
 deliberately \emph{coupled}: illumination drives the power budget, the power
 budget and eclipse state drive the thermal channels, and transmit duty and slew
-rate drive the amplifier temperature and the link margin. Coupling is what makes
-the question in RQ3 meaningful --- an adversary who moves one channel while
-leaving the others untouched breaks the relationships long before it breaks any
-single limit.
+rate drive the amplifier temperature and the link margin. Coupling is what
+makes the question in RQ3 meaningful, because an adversary who moves one channel
+while leaving the others untouched breaks the relationships long before it
+breaks any single limit.
 
 The station drives that model at a 30-second cadence and adds the three
 ground-segment planes: shift handovers produce console sign-ins (service
@@ -403,11 +404,11 @@ mission archive.
 Attacks are applied \emph{after} the nominal run, so "normal" is defined in one
 place. Each injector receives the timeline and a context object, and returns the
 timeline with its events inserted or mutated and labelled. This design has two
-consequences we rely on. Injectors compose --- the credential stage registers
-the hijacked session that the tampering and exfiltration stages reuse, which is
-what produces genuine cross-plane correlation rather than five independent
-incidents. And because injection is a transformation of a clean timeline, the
-same seed yields the same corpus, byte for byte.
+consequences we rely on. First, injectors compose: the credential stage
+registers the hijacked session that the tampering and exfiltration stages
+reuse, which produces genuine cross-plane correlation rather than five
+independent incidents. Second, because injection is a transformation of a clean
+timeline, the same seed yields the same corpus, byte for byte.
 
 \subsection{Cloud deployment}
 
@@ -456,7 +457,7 @@ fixed and covered by regression tests.
 \subsection{Corpus}
 
 Table~\ref{tab:corpus} describes one \expSimHours-hour run. Telemetry dominates
-by construction, at one sample every 30 seconds; the identity and downlink
+by design, at one sample every 30 seconds; the identity and downlink
 planes are sparse, which is exactly the regime in which a per-event false
 positive rate matters.
 
@@ -526,10 +527,10 @@ while destroying the joint structure.
 In a clean run, each telemetry vector in a \expSwapWindowMin-minute window is
 replaced by the vector observed exactly half an orbit earlier, channel for
 channel. Every individual value is one the spacecraft genuinely produced and
-lies inside its own learned marginal distribution; the \emph{combination} ---
-eclipse-era power draw beside sunlit-era temperatures --- is physically
+lies inside its own learned marginal distribution. The \emph{combination},
+eclipse-era power draw beside sunlit-era temperatures, is physically
 impossible. Orbit phase is not among the model's features, so the substitution
-is invisible to any per-channel test by construction, and detectable only by a
+cannot be seen by any per-channel test at all, and is detectable only by a
 model of the relationships between channels.
 
 The probe also models a real technique: replaying recorded housekeeping frames
@@ -554,8 +555,8 @@ Table~\ref{tab:effectiveness} and Figure~\ref{fig:ablation} give the main
 result. All five scenarios are detected in all \expNumSeeds{} trials, at a
 precision of $\expPrecision \pm \expPrecisionSD$ and a false-positive rate of
 \expFprOverall\% of benign events. The four scenarios that leave discrete
-evidence --- a forged tag, a reused counter, a policy attachment, a transfer to
-an unapproved destination --- reach event-level recall of $1.00$ with zero
+evidence, such as a forged tag, a reused counter, a policy attachment or a
+transfer to an unapproved destination, reach event-level recall of $1.00$ with zero
 variance and an MTTD of $0$ seconds, because the first event of the scenario is
 itself the violation.
 
@@ -572,20 +573,20 @@ overlapping: neither configuration alone covers the corpus.}
 \end{figure*}
 
 The ablation shows the two halves are complementary and non-overlapping. The
-model alone detects nothing outside the telemetry plane --- it has nothing to
-say about a forged authentication tag --- and the rules alone reach only
+model alone detects nothing outside the telemetry plane, having nothing to say
+about a forged authentication tag, and the rules alone reach only
 \expRecAnomalyRules{} recall on the behavioural drift. Together they cover the
 corpus. The model configuration attains a precision of \expPrecisionMl{} with
 zero false positives in any trial, which is the streak requirement of
-Section~\ref{sec:model} doing its work: the per-sample false-positive rate at
+Section~\ref{sec:model} at work: the per-sample false-positive rate at
 the operating point is $0.2\%$, but isolated exceedances never survive three
 consecutive samples.
 
-The residual false positives are concentrated in two rules and are worth naming
-rather than rounding away. The impossible-travel rule fires
+The residual false positives are concentrated in two rules, which we report
+individually rather than in aggregate. The impossible-travel rule fires
 \expFpAuthPerTrial{} times per trial, always on the \emph{legitimate} operator
-sign-in that follows the attacker's --- correct behaviour that a label-based
-metric is obliged to count as an error. The command-rate rule fires
+sign-in that follows the attacker's. That is correct behaviour which a
+label-based metric is obliged to count as an error. The command-rate rule fires
 \expFpRatePerTrial{} times in the trials where it fires at all, on nominal
 bursts that cross a per-operator ceiling that is simply set too tightly. The
 first is a metric artefact; the second is a genuine tuning defect.
@@ -610,14 +611,14 @@ never fired first.}
 \label{fig:leadtime}
 \end{figure}
 
-The interpretation is narrow and we state it narrowly: a limit check tells an
-operator the spacecraft is \emph{already} outside its design envelope, whereas
-the baseline tells them it is heading there. Forty minutes is the difference
-between diagnosing a degradation and reacting to an alarm. It is not evidence
-that the model is a good anomaly detector in general --- only that it is a
-better early indicator than a red line.
+The interpretation is narrow. A limit check tells an operator the spacecraft
+is \emph{already} outside its design envelope, whereas the baseline tells them
+it is heading there. Forty minutes is the difference between diagnosing a
+degradation and reacting to an alarm. This is not evidence that the model is a
+good anomaly detector in general, only that it is a better early indicator than
+a red line.
 
-\subsection{RQ3: Multivariate versus univariate --- two negative results}
+\subsection{RQ3: Multivariate versus univariate detection}
 
 \emph{On the injected drift, the covariance buys nothing.}
 Figure~\ref{fig:roc} shows the receiver operating characteristic of both
@@ -626,8 +627,8 @@ where they could differ. Over \expNumSeeds{} trials the multivariate detector
 achieves $\mathrm{AUC}\ \expAucMulti \pm \expAucMultiSD$ and the best single
 channel $\expAucUni \pm \expAucUniSD$. The univariate detector is marginally
 \emph{better}, and the gap is smaller than the between-trial spread. The
-rationale we designed the model around --- that correlation is what makes a
-sub-threshold attack visible --- is not supported for this attack.
+design rationale, that correlation is what makes a sub-threshold attack
+visible, is not supported for this attack.
 
 \begin{figure}[t]
 \centering
@@ -648,9 +649,9 @@ easier than intended, and that the experiment does not test the claim.
 \emph{On an attack that isolates the joint structure, both detectors fail.} The
 phase-swap probe of Section~\ref{sec:probe} does test it, and the result is
 worse than inconclusive. Figure~\ref{fig:phaseswap} shows why: the swapped
-vectors do not merely fail to exceed the threshold, they score \emph{lower} than
-nominal telemetry --- median squared distance \expSwapMedianSwapped{} against
-\expSwapMedianNormal{} for nominal samples. Both detectors are below chance
+vectors do not simply fail to exceed the threshold, they score \emph{lower} than
+nominal telemetry, at a median squared distance of \expSwapMedianSwapped{}
+against \expSwapMedianNormal{} for nominal samples. Both detectors are below chance
 ($\mathrm{AUC}\ \expAucSwapMulti \pm \expAucSwapMultiSD$ multivariate,
 $\expAucSwapUni \pm \expAucSwapUniSD$ univariate) and the attack is flagged in
 only \expSwapDetectedMulti{} of \expNumSeeds{} trials.
@@ -659,9 +660,9 @@ only \expSwapDetectedMulti{} of \expNumSeeds{} trials.
 \centering
 \includegraphics{figures/phaseswap.pdf}
 \caption{Score distributions under the phase-swap probe. Replayed housekeeping
-frames from half an orbit earlier sit \emph{inside} --- indeed below --- the
-nominal distribution, because orbit phase is marginalised away by a baseline
-fitted over a whole orbit. Texture is redundant with colour for grayscale
+frames from half an orbit earlier sit inside, and in fact below, the nominal
+distribution, because orbit phase is marginalised away by a baseline fitted
+over a whole orbit. Texture is redundant with colour for grayscale
 printing.}
 \label{fig:phaseswap}
 \end{figure}
@@ -678,7 +679,7 @@ The fix is to condition on phase rather than to marginalise it: model the
 residual from a phase-dependent expectation, or fit a mixture indexed by orbit
 phase, and include phase as an explicit conditioning variable. We report the
 failure rather than implementing the fix here, because the probe is the
-contribution --- it is a cheap, reusable test that any spacecraft telemetry
+contribution. It is a cheap, reusable test that any spacecraft telemetry
 detector can be subjected to, and we would expect several published detectors to
 fail it.
 
@@ -705,9 +706,10 @@ diurnal cycle; discrimination barely changes.}
 \input{data/table_baseline}
 
 The cause is coverage, not sample size. A window shorter than the orbital and
-diurnal cycle observes only part of the state space --- some eclipse fractions,
-some contact geometries, some thermal regimes --- so the quantile threshold is
-calibrated against a distribution the deployed model will not see. The
+diurnal cycle observes only part of the state space, covering some eclipse
+fractions, contact geometries and thermal regimes but not others, so the
+quantile threshold is calibrated against a distribution the deployed model will
+not see. The
 operational rule this implies is concrete: a baseline must span at least one
 full cycle of every periodicity the mission has, and a detector that reports
 only AUC would have concluded, wrongly, that one hour of data is nearly as good
@@ -722,8 +724,8 @@ Table~\ref{tab:cost} gives the single-core cost. The engine processes
 (\expUsPerEventMl~$\mu$s per event) and \expThroughputRules{} without it;
 fitting the baseline on a day of telemetry takes \expFitSeconds{}~s and produces
 a \expModelKb~KB model. At a 30-second telemetry cadence, one core is
-approximately five orders of magnitude faster than one station requires, so the
-detection cost is not the constraint --- transport and storage are.
+approximately five orders of magnitude faster than one station requires. The
+constraint is transport and storage, not detection.
 
 \subsection{Alert volume}
 
@@ -751,10 +753,10 @@ unrelated alerts.
 
 \subsection{Rules and models do different jobs}
 
-The ablation makes a point that is easy to lose in a field enthusiastic about
-learned detection: the four scenarios with the highest impact --- forged
-commands, replay, privilege escalation, exfiltration --- are caught by
-deterministic rules, immediately, with no variance and no training data. They
+The ablation carries a point that is easily lost in a field enthusiastic about
+learned detection. Deterministic rules catch the four scenarios with the
+highest impact, namely forged commands, replay, privilege escalation and
+exfiltration, immediately, with no variance and no training data. They
 are caught because the mission has an explicit policy (an authentication tag
 must verify; a counter must not repeat; a role may not issue this opcode) and a
 rule is the natural expression of a policy. Learned detection earns its place
@@ -770,10 +772,11 @@ spacecraft housekeeping channels carry most of the signal that a static baseline
 can extract, and the joint structure a static baseline learns is too coarse to
 catch an adversary who respects the marginals. Because the second failure is
 below chance, it is also \emph{exploitable}: an adversary who knows a
-Mahalanobis-style baseline is deployed can replay old frames not merely to
-evade it but to drive the anomaly score down while a fault progresses.
+Mahalanobis-style baseline is deployed can replay old frames to drive the
+anomaly score down while a fault progresses, rather than only to evade the
+detector.
 
-We think the implication generalises beyond our model. Any detector that fits a
+The implication appears to generalise beyond our model. Any detector that fits a
 phase-marginal distribution over a periodic system inherits the same blind spot,
 including detectors considerably more sophisticated than
 ours~\cite{hundman2018lstm,yairi2017datadriven} unless they condition on phase
@@ -782,11 +785,11 @@ encourage its use as a standard check.
 
 \subsection{Deployment lessons}
 
-The three silent failures in Section~\ref{sec:impl} share a shape: the cloud API
+The three silent failures in Section~\ref{sec:impl} have a common shape. The cloud API
 accepted the request, returned success, and discarded the data or the
-configuration intent. A detection pipeline is precisely the kind of system in
-which such failures are invisible --- an empty log group and a quiet queue look
-identical to a quiet day. We took two lessons. Fail loudly on partial
+configuration intent. A detection pipeline is exactly the sort of system in
+which such failures are invisible, because an empty log group and a quiet
+queue look identical to a quiet day. We took two lessons. Fail loudly on partial
 acceptance, even when the API does not consider it an error. And test the cloud
 path, not only the logic: an in-process emulation of the cloud services caught
 all three defects in an afternoon, with no credentials and no account.
@@ -794,14 +797,14 @@ all three defects in an afternoon, with no credentials and no account.
 \section{Limitations and Threats to Validity}
 \label{sec:limitations}
 
-\emph{The corpus is synthetic.} This is the dominant threat and we do not
-minimise it. Our spacecraft model is a sine-wave illumination profile with
+\emph{The corpus is synthetic.} This is the dominant threat to validity. Our
+spacecraft model is a sine-wave illumination profile with
 first-order thermal lags; real housekeeping telemetry has instrument
 nonlinearity, sensor faults, seasonal beta-angle drift and operator idiosyncrasy
 that we do not reproduce. Absolute numbers should therefore be read as
 properties of this corpus, not of a mission. The comparative and structural
-findings --- the rules/model complementarity, the ordering of lead times, the
-phase-swap blindness, the coverage threshold --- depend on the \emph{structure}
+findings (the rules/model complementarity, the ordering of lead times, the
+phase-swap blindness and the coverage threshold) depend on the \emph{structure}
 of the data rather than its fidelity, and we expect them to transfer; the
 precision figure does not.
 
@@ -818,8 +821,8 @@ correct detector behaviour scored as an error. We report per-scenario numbers to
 keep this visible rather than resolving it.
 
 \emph{Scope.} One station, one spacecraft, one region. Cross-station
-correlation --- the same source address touching two stations --- is a stronger
-signal than either station alone and we do not evaluate it. Per-container state
+correlation, meaning the same source address touching two stations, is a
+stronger signal than either station alone, and we do not evaluate it. Per-container state
 in the deployed detector (rate windows, anomaly streaks) is shard-sticky rather
 than guaranteed; only the replay memory is made globally consistent.
 
@@ -828,8 +831,8 @@ in-process emulation of the AWS APIs. It is faithful about the behaviours we
 depend on, but it is not AWS: it cannot surface authorisation-policy mistakes,
 service quotas or eventual consistency. The infrastructure code is format-checked
 and reviewed but has not been applied against a live account, and the cost and
-latency of the deployed pipeline are therefore unmeasured --- only the
-engine's compute cost in Table~\ref{tab:cost} is.
+latency of the deployed pipeline are therefore unmeasured. Only the engine's
+compute cost in Table~\ref{tab:cost} is measured.
 
 \emph{Model scope.} We evaluate one baseline family. Isolation
 Forests~\cite{liu2008isolation}, sequence models~\cite{hundman2018lstm} and the
@@ -866,7 +869,7 @@ marginals, and an adversary will.
 
 \emph{Detection evaluation methodology.} Sommer and Paxson's critique of machine
 learning for intrusion detection~\cite{sommer2010closedworld} and Axelsson's
-base-rate analysis~\cite{axelsson2000baserate} shape how we report results ---
+base-rate analysis~\cite{axelsson2000baserate} shape how we report results:
 per-scenario rather than aggregate, false positives over benign events, and
 alert volume as a first-class result. Ring et al.\ survey the network IDS
 datasets~\cite{ring2019datasets} whose absence in this domain motivated the
@@ -889,8 +892,8 @@ deterministic policy rules, not learned detection, carry the
 high-impact scenarios; that the learned baseline earns its place on exactly one
 of the five, where it buys $\expLeadMean$~minutes over the spacecraft's own
 limits; that its multivariate machinery does not outperform a well-calibrated
-per-channel detector on that scenario; and that both are blind --- below chance
---- to an adversary who replays valid telemetry from a different orbit phase.
+per-channel detector on that scenario; and that both score below chance
+against an adversary who replays valid telemetry from a different orbit phase.
 The last finding is structural, applies to any phase-marginal baseline, and is
 testable in a few lines of code.
 

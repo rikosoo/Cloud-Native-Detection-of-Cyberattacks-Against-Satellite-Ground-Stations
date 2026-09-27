@@ -8,6 +8,7 @@ Automates the checks that get a manuscript desk-rejected before review:
   * every abbreviation in the abstract defined on first use
   * no author biographies
   * double-column 10pt journal class
+  * no em dashes, which this manuscript uses commas, colons or full stops for
 
 Run after building:  python IEEE/check_compliance.py
 Exits non-zero if any hard rule fails, so CI can gate on it.
@@ -41,7 +42,7 @@ def macros() -> dict[str, str]:
     path = HERE / "data" / "macros.tex"
     if not path.exists():
         return {}
-    return dict(re.findall(r"\\newcommand\{\\(exp\w+)\}\{(.*?)\}\s*$", path.read_text(), re.M))
+    return dict(re.findall(r"\\newcommand\{\\(exp\w+)\}\{(.*?)\}\s*$", path.read_text(), re.MULTILINE))
 
 
 def expand(text: str, values: dict[str, str]) -> str:
@@ -52,7 +53,7 @@ def expand(text: str, values: dict[str, str]) -> str:
 
 
 def abstract_of(source: str) -> str:
-    match = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", source, re.S)
+    match = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", source, re.DOTALL)
     if not match:
         raise SystemExit("no abstract found")
     return match.group(1).strip()
@@ -68,7 +69,7 @@ def page_count(pdf: Path) -> int | None:
     if not pdf.exists() or not shutil.which("pdfinfo"):
         return None
     out = subprocess.run(["pdfinfo", str(pdf)], capture_output=True, text=True, check=True).stdout
-    match = re.search(r"^Pages:\s+(\d+)", out, re.M)
+    match = re.search(r"^Pages:\s+(\d+)", out, re.MULTILINE)
     return int(match.group(1)) if match else None
 
 
@@ -141,6 +142,17 @@ def main() -> int:
     )
 
     # Structure ------------------------------------------------------------
+    body = "\n".join(
+        line for line in source.split("\n") if not line.lstrip().startswith("%")
+    )
+    em_dashes = body.count("---")
+    checks.append(
+        (
+            "no em dashes",
+            em_dashes == 0,
+            "none" if em_dashes == 0 else f"{em_dashes} occurrences of '---'",
+        )
+    )
     checks.append(
         (
             "no author biographies",

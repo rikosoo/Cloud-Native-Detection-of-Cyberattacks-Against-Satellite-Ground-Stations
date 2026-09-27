@@ -3,7 +3,7 @@
 > Fill in the bracketed fields, then paste into the submission system's cover
 > letter box (or export to PDF). Everything else is already accurate for this
 > manuscript. Delete the two "not applicable" paragraphs only if they are
-> genuinely not applicable — the journal asks for them explicitly.
+> genuinely not applicable, since the journal asks for them explicitly.
 
 ---
 
@@ -35,9 +35,9 @@ negative and, to our knowledge, not previously reported. First, on our
 behavioural attack the multivariate baseline does not outperform a
 well-calibrated per-channel detector, and we say so rather than reporting only
 the favourable comparison. Second, a controlled probe that preserves every
-marginal distribution while destroying the joint structure — replaying
-housekeeping frames from half an orbit earlier — is invisible to both
-detectors, scoring *below chance*: the attack drives the anomaly score down
+marginal distribution while destroying the joint structure, by replaying
+housekeeping frames from half an orbit earlier, is invisible to both
+detectors and scores *below chance*: the attack drives the anomaly score down
 while a fault progresses. This is a structural property of any baseline fitted
 over a full orbit, applies to considerably more sophisticated detectors than
 ours unless they condition on orbit phase, and the probe that exposes it is a

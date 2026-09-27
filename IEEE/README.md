@@ -4,7 +4,8 @@ Everything here is formatted to the rules you supplied: double column, 10pt,
 under the page limit, a 250-word single-paragraph abstract with no citations or
 equations, no author biographies, and a generative-AI declaration.
 
-`make check` verifies all of that mechanically.
+`make check` verifies all of that mechanically, including that the prose uses
+no em dashes.
 
 ---
 
@@ -125,6 +126,7 @@ Requires the same TeX packages as `../paper` (`IEEEtran`, `pgf/tikz`,
 [PASS] abstract has no citations
 [PASS] abstract has no equations
 [PASS] abstract abbreviations defined
+[PASS] no em dashes
 [PASS] no author biographies
 [PASS] double column, 10pt journal
 [PASS] generative AI use declared

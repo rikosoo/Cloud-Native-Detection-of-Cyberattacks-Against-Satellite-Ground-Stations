@@ -72,8 +72,8 @@ contrariam a justificativa de projeto da qual partimos. Primeiro, o modelo
 multivariado não supera um detector por canal bem calibrado naquela deriva
 ($\mathrm{AUC}\ \expAucMulti \pm \expAucMultiSD$ contra
 $\expAucUni \pm \expAucUniSD$). Segundo, uma sonda controlada que preserva todas
-as distribuições marginais enquanto destrói a estrutura conjunta --- reproduzir
-quadros de telemetria de meia órbita antes --- é invisível para ambos os
+as distribuições marginais enquanto destrói a estrutura conjunta, ao reproduzir
+quadros de telemetria de meia órbita antes, é invisível para ambos os
 detectores ($\mathrm{AUC}\ \expAucSwapMulti$ e \expAucSwapUni{}, detectada em
 \expSwapDetectedMulti{} de \expNumSeeds{} execuções), porque uma linha de base
 ajustada sobre uma órbita inteira marginaliza exatamente a informação de fase que
@@ -116,8 +116,8 @@ segmento terrestre de satélites não existe, ao nosso conhecimento, nenhum.
 Telemetria e registros de auditoria do segmento terrestre são
 operacionalmente sensíveis e raramente publicados e, quando o são, vêm sem
 rótulos. A consequência prática é que afirmações sobre detecção no segmento
-terrestre não podem ser comparadas, e que o custo de um detector --- em falsos
-positivos, em tempo de analista, em computação --- geralmente não é relatado.
+terrestre não podem ser comparadas, e que o custo de um detector em falsos
+positivos, tempo de analista e computação geralmente não é relatado.
 
 Este artigo contribui com um ambiente de teste e uma avaliação, não com um novo
 detector. Concretamente:
@@ -125,9 +125,9 @@ detector. Concretamente:
 \begin{itemize}
   \item \textbf{Um gerador aberto e rotulado de corpus de estação terrestre}
   (Seção~\ref{sec:impl}). Uma estação simulada emite quatro planos
-  correlacionados de evidência, e cinco cenários de emulação de adversário ---
-  compromisso de credenciais, adulteração de telecomandos, reprodução
-  (\emph{replay}), deriva comportamental sublimiar e exfiltração em massa ---
+  correlacionados de evidência, e cinco cenários de emulação de adversário
+  (compromisso de credenciais, adulteração de telecomandos, reprodução ou
+  \emph{replay}, deriva comportamental sublimiar e exfiltração em massa)
   injetam-se nessa linha temporal, rotulando todo evento que criam ou modificam.
   Os cenários se compõem: a sessão roubada estabelecida pelo estágio de
   credenciais é a mesma que os estágios de adulteração e exfiltração reutilizam.
@@ -156,7 +156,7 @@ Organizamos a avaliação em torno de cinco perguntas:
 \begin{description}
   \item[QP1] A pipeline detecta cada cenário, e com que precisão?
   \item[QP2] O que a linha de base aprendida acrescenta sobre as verificações de
-  limite da própria espaçonave --- a alternativa que uma missão real já opera?
+  limite da própria espaçonave, a alternativa que uma missão real já opera?
   \item[QP3] O modelo multivariado acrescenta algo sobre um detector por canal
   bem calibrado?
   \item[QP4] De quanta telemetria limpa a linha de base precisa antes de ser
@@ -174,10 +174,10 @@ autenticados e o estado da espaçonave em produtos de dados arquivados. Quatro
 tipos de registro são produzidos, e um detector precisa de todos os quatro:
 
 \begin{enumerate}
-  \item \emph{Telemetria.} Dados de bordo (\emph{housekeeping}) --- tensão e
-  corrente do barramento, estado de carga da bateria, temperaturas do
-  amplificador e da bateria, margem de enlace --- transmitidos continuamente
-  durante um contato.
+  \item \emph{Telemetria.} Dados de bordo (\emph{housekeeping}) transmitidos
+  continuamente durante um contato: tensão e corrente do barramento, estado de
+  carga da bateria, temperaturas do amplificador e da bateria, margem de
+  enlace.
   \item \emph{Telecomandos.} Quadros TC do CCSDS~\cite{ccsds232}, autenticados em
   missões modernas pelo protocolo \emph{Space Data Link
   Security}~\cite{ccsds355}, que fornece uma etiqueta de autenticação com chave
@@ -205,13 +205,13 @@ capacidade computacional e em extorquir o arquivo.
 
 \emph{Interno.} Um operador credenciado agindo fora de seu papel. Usa
 credenciais legítimas, de redes legítimas, em horários legítimos; apenas
-\emph{o que} ele faz é anômalo. Derrota, por construção, toda regra baseada em
-rede ou em procedência de identidade.
+\emph{o que} ele faz é anômalo. Nenhuma regra baseada em rede ou em
+procedência de identidade o detecta.
 
 \emph{Patrocinado por Estado.} Paciente, conhecedor da missão, visa material
 criptográfico e o caminho de comando, desativa o registro de auditoria
-precocemente e prefere uma degradação indistinguível de uma falha de barramento
---- porque um operador que acredita que a espaçonave está com defeito agirá
+precocemente e prefere uma degradação indistinguível de uma falha de barramento,
+porque um operador que acredita que a espaçonave está com defeito agirá
 segundo o procedimento errado.
 
 \subsection{Fronteiras de confiança e caminhos de ataque}
@@ -277,10 +277,9 @@ nenhum SDK de nuvem. Ele executa inalterado na ferramenta de linha de comando
 serviços de nuvem são alcançados apenas por meio de uma interface de escoamento
 de eventos e de uma interface de armazenamento de estado.
 
-\emph{\emph{Offline} primeiro.} A pipeline completa --- gerar, ajustar,
-detectar, pontuar --- executa com NumPy e um leitor de YAML, sem credenciais e
-sem rede. É isso que torna o artefato reproduzível por um leitor que não tem
-conta na AWS.
+\emph{\emph{Offline} primeiro.} A pipeline completa de gerar, ajustar,
+detectar e pontuar executa com NumPy e um leitor de YAML, sem credenciais e sem
+rede, de modo que um leitor sem conta na AWS consegue reproduzir o artefato.
 
 \emph{Medido, não afirmado.} Todo evento injetado carrega um rótulo de verdade
 de referência, de modo que precisão, revocação e latência de detecção são
@@ -359,9 +358,9 @@ Apenas o último horizonte precisa ser globalmente consistente. Um quadro
 reproduzido foi aceito horas antes, possivelmente por outra invocação Lambda em
 outro \emph{shard}, de modo que a detecção de reprodução é a única regra que não
 pode ser respondida a partir de um único lote. O motor, portanto, endereça uma
-interface de \emph{memória de reprodução} --- um dicionário \emph{offline} e, na
-nuvem, uma tabela DynamoDB com tempo de vida e escrita condicional, o que torna
-a deduplicação livre de corrida sem nenhum bloqueio.
+interface de \emph{memória de reprodução}, sustentada por um dicionário
+\emph{offline} e, na nuvem, por uma tabela DynamoDB com tempo de vida e escrita
+condicional, o que torna a deduplicação livre de corrida sem nenhum bloqueio.
 
 \subsection{Linha de base de telemetria}
 \label{sec:model}
@@ -415,8 +414,8 @@ modelo de barramento é pequeno, mas deliberadamente \emph{acoplado}: a
 iluminação governa o balanço de potência, o balanço de potência e o estado de
 eclipse governam os canais térmicos, e o ciclo de transmissão e a taxa de
 manobra governam a temperatura do amplificador e a margem de enlace. O
-acoplamento é o que torna a pergunta da QP3 significativa --- um adversário que
-move um canal deixando os outros intactos rompe as relações muito antes de
+acoplamento é o que torna a pergunta da QP3 significativa, porque um adversário
+que move um canal deixando os outros intactos rompe as relações muito antes de
 romper qualquer limite isolado.
 
 A estação aciona esse modelo a uma cadência de 30 segundos e acrescenta os três
@@ -432,11 +431,11 @@ Os ataques são aplicados \emph{depois} da execução nominal, de modo que o
 "normal" é definido em um só lugar. Cada injetor recebe a linha temporal e um
 objeto de contexto, e devolve a linha temporal com seus eventos inseridos ou
 modificados e rotulados. Esse projeto tem duas consequências das quais
-dependemos. Os injetores se compõem --- o estágio de credenciais registra a
-sessão sequestrada que os estágios de adulteração e exfiltração reutilizam, o
-que produz correlação genuína entre planos em vez de cinco incidentes
-independentes. E, porque a injeção é uma transformação de uma linha temporal
-limpa, a mesma semente produz o mesmo corpus, byte a byte.
+dependemos. Primeiro, os injetores se compõem: o estágio de credenciais
+registra a sessão sequestrada que os estágios de adulteração e exfiltração
+reutilizam, o que produz correlação genuína entre planos em vez de cinco
+incidentes independentes. Segundo, porque a injeção é uma transformação de uma
+linha temporal limpa, a mesma semente produz o mesmo corpus, byte a byte.
 
 \subsection{Implantação em nuvem}
 
@@ -488,7 +487,7 @@ testes de regressão.
 \subsection{Corpus}
 
 A Tabela~\ref{tab:corpus} descreve uma execução de \expSimHours~horas. A
-telemetria domina por construção, com uma amostra a cada 30 segundos; os planos
+telemetria domina por projeto, com uma amostra a cada 30 segundos; os planos
 de identidade e de \emph{downlink} são esparsos, o que é exatamente o regime em
 que uma taxa de falsos positivos por evento importa.
 
@@ -562,11 +561,11 @@ Em uma execução limpa, cada vetor de telemetria em uma janela de
 \expSwapWindowMin~minutos é substituído pelo vetor observado exatamente meia
 órbita antes, canal a canal. Cada valor individual é um valor que a espaçonave
 genuinamente produziu e está dentro de sua própria marginal aprendida; a
-\emph{combinação} --- consumo de potência de época de eclipse ao lado de
-temperaturas de época iluminada --- é fisicamente impossível. A fase orbital não
-está entre os atributos do modelo, de modo que a substituição é invisível a
-qualquer teste por canal por construção, e detectável apenas por um modelo das
-relações entre canais.
+\emph{combinação}, consumo de potência de época de eclipse ao lado de
+temperaturas de época iluminada, é fisicamente impossível. A fase orbital não
+está entre os atributos do modelo, de modo que a substituição não pode ser vista por
+nenhum teste por canal, e é detectável apenas por um modelo das relações entre
+canais.
 
 A sonda também modela uma técnica real: reproduzir quadros de bordo gravados
 para mascarar uma falha ou o efeito de um comando malicioso. Mantemo-la como uma
@@ -590,8 +589,8 @@ A Tabela~\ref{tab:effectiveness} e a Figura~\ref{fig:ablation} dão o resultado
 principal. Todos os cinco cenários são detectados em todas as \expNumSeeds{}
 execuções, com precisão de $\expPrecision \pm \expPrecisionSD$ e taxa de falsos
 positivos de \expFprOverall\% dos eventos benignos. Os quatro cenários que
-deixam evidência discreta --- uma etiqueta forjada, um contador reutilizado, uma
-anexação de política, uma transferência para um destino não aprovado ---
+deixam evidência discreta, como uma etiqueta forjada, um contador reutilizado,
+uma anexação de política ou uma transferência para um destino não aprovado,
 alcançam revocação por evento de $1{,}00$ com variância zero e TMD de $0$
 segundos, porque o primeiro evento do cenário é, ele mesmo, a violação.
 
@@ -608,20 +607,20 @@ redundantes: nenhuma configuração isolada cobre o corpus.}
 \end{figure*}
 
 A ablação mostra que as duas metades são complementares e não se sobrepõem. O
-modelo sozinho não detecta nada fora do plano de telemetria --- ele não tem nada
-a dizer sobre uma etiqueta de autenticação forjada --- e as regras sozinhas
+modelo sozinho não detecta nada fora do plano de telemetria, pois não tem nada
+a dizer sobre uma etiqueta de autenticação forjada, e as regras sozinhas
 alcançam apenas \expRecAnomalyRules{} de revocação na deriva comportamental.
 Juntos, cobrem o corpus. A configuração de modelo atinge precisão de
 \expPrecisionMl{} com zero falsos positivos em qualquer execução, e isso é a
-exigência de sequência da Seção~\ref{sec:model} fazendo seu trabalho: a taxa de
+exigência de sequência da Seção~\ref{sec:model} em ação: a taxa de
 falsos positivos por amostra no ponto de operação é de \expFprTelemetryOp\%, mas
 exceções isoladas nunca sobrevivem a três amostras consecutivas.
 
-Os falsos positivos residuais concentram-se em duas regras e merecem ser
-nomeados em vez de arredondados. A regra de viagem impossível dispara
+Os falsos positivos residuais concentram-se em duas regras e são relatados
+individualmente, e não em agregado. A regra de viagem impossível dispara
 \expFpAuthPerTrial{} vez por execução, sempre sobre o acesso \emph{legítimo} do
-operador que se segue ao do atacante --- comportamento correto que uma métrica
-baseada em rótulos é obrigada a contar como erro. A regra de taxa de comandos
+operador que se segue ao do atacante. Esse é um comportamento correto que uma
+métrica baseada em rótulos é obrigada a contar como erro. A regra de taxa de comandos
 dispara \expFpRatePerTrial{} vezes nas execuções em que dispara, sobre rajadas
 nominais que cruzam um teto por operador simplesmente ajustado com aperto
 excessivo. O primeiro caso é um artefato de métrica; o segundo é um defeito
@@ -647,15 +646,15 @@ primeira violação de limite de controle de interface, ao longo de
 \label{fig:leadtime}
 \end{figure}
 
-A interpretação é estreita e a enunciamos estreitamente: uma verificação de
+A interpretação é estreita. Uma verificação de
 limite informa a um operador que a espaçonave \emph{já} está fora de seu
 envelope de projeto, enquanto a linha de base informa que ela está caminhando
 para lá. Quarenta minutos são a diferença entre diagnosticar uma degradação e
 reagir a um alarme. Isso não é evidência de que o modelo seja um bom detector de
-anomalias em geral --- apenas de que é um indicador precoce melhor do que uma
+anomalias em geral, apenas de que é um indicador precoce melhor do que uma
 linha vermelha.
 
-\subsection{QP3: Multivariado contra univariado --- dois resultados negativos}
+\subsection{QP3: Detecção multivariada contra univariada}
 
 \emph{Na deriva injetada, a covariância não compra nada.} A
 Figura~\ref{fig:roc} mostra a característica de operação do receptor de ambos os
@@ -664,9 +663,8 @@ região em que poderiam diferir. Ao longo de \expNumSeeds{} execuções, o detec
 multivariado alcança $\mathrm{AUC}\ \expAucMulti \pm \expAucMultiSD$ e o melhor
 canal isolado, $\expAucUni \pm \expAucUniSD$. O detector univariado é
 marginalmente \emph{melhor}, e a diferença é menor do que a dispersão entre
-execuções. A justificativa em torno da qual projetamos o modelo --- que a
-correlação é o que torna visível um ataque sublimiar --- não se sustenta para
-este ataque.
+execuções. Nossa justificativa de projeto, de que a correlação é o que torna
+visível um ataque sublimiar, não se sustenta para este ataque.
 
 \begin{figure}[t]
 \centering
@@ -688,7 +686,7 @@ experimento não testa a alegação.
 \emph{Em um ataque que isola a estrutura conjunta, ambos os detectores falham.}
 A sonda de troca de fase da Seção~\ref{sec:probe} testa, sim, essa alegação, e o
 resultado é pior do que inconclusivo. A Figura~\ref{fig:phaseswap} mostra por
-quê: os vetores trocados não apenas deixam de exceder o limiar --- eles pontuam
+quê: os vetores trocados não apenas deixam de exceder o limiar, eles pontuam
 \emph{abaixo} da telemetria nominal, com distância quadrática mediana de
 \expSwapMedianSwapped{} contra \expSwapMedianNormal{} das amostras nominais.
 Ambos os detectores ficam abaixo do acaso
@@ -700,8 +698,8 @@ apenas \expSwapDetectedMulti{} de \expNumSeeds{} execuções.
 \centering
 \includegraphics{figures/phaseswap_pt.pdf}
 \caption{Distribuições de escore sob a sonda de troca de fase. Quadros de bordo
-reproduzidos de meia órbita antes situam-se \emph{dentro} --- na verdade abaixo
---- da distribuição nominal, porque a fase orbital é marginalizada por uma linha
+reproduzidos de meia órbita antes situam-se dentro, e de fato abaixo, da
+distribuição nominal, porque a fase orbital é marginalizada por uma linha
 de base ajustada sobre uma órbita inteira. A textura é redundante com a cor,
 para impressão em tons de cinza.}
 \label{fig:phaseswap}
@@ -720,7 +718,7 @@ A correção é condicionar à fase em vez de marginalizá-la: modelar o resídu
 relação a uma expectativa dependente da fase, ou ajustar uma mistura indexada
 pela fase orbital, incluindo a fase como variável explícita de condicionamento.
 Relatamos a falha em vez de implementar a correção aqui porque a sonda é a
-contribuição --- é um teste barato e reutilizável ao qual qualquer detector de
+contribuição. É um teste barato e reutilizável ao qual qualquer detector de
 telemetria de espaçonave pode ser submetido, e esperaríamos que vários
 detectores publicados falhassem nele.
 
@@ -749,10 +747,10 @@ quase não muda.}
 \input{data/table_baseline_pt}
 
 A causa é cobertura, não tamanho de amostra. Uma janela mais curta do que o
-ciclo orbital e diurno observa apenas parte do espaço de estados --- algumas
-frações de eclipse, algumas geometrias de contato, alguns regimes térmicos ---
-de modo que o limiar quantílico é calibrado contra uma distribuição que o modelo
-implantado não verá. A regra operacional implicada é concreta: uma linha de base
+ciclo orbital e diurno observa apenas parte do espaço de estados, cobrindo
+algumas frações de eclipse, geometrias de contato e regimes térmicos mas não
+outros, de modo que o limiar quantílico é calibrado contra uma distribuição que
+o modelo implantado não verá. A regra operacional implicada é concreta: uma linha de base
 deve cobrir ao menos um ciclo completo de cada periodicidade que a missão tenha,
 e um detector que relatasse apenas AUC teria concluído, erradamente, que uma
 hora de dados é quase tão boa quanto um dia.
@@ -767,8 +765,7 @@ A Tabela~\ref{tab:cost} dá o custo em um único núcleo. O motor processa
 linha de base com um dia de telemetria leva \expFitSeconds{}~s e produz um
 modelo de \expModelKb~KB. A uma cadência de telemetria de 30 segundos, um núcleo
 é cerca de cinco ordens de magnitude mais rápido do que uma estação exige, de
-modo que o custo de detecção não é a restrição --- transporte e armazenamento
-são.
+modo que a restrição é o transporte e o armazenamento, não a detecção.
 
 \subsection{Volume de alertas}
 
@@ -782,8 +779,8 @@ são.
 \end{figure*}
 
 A Figura~\ref{fig:alerts} mostra a carga voltada ao analista. A média de
-\expFindingsMean{} achados por dia simulado é um resumo enganoso: a carga é
-extremamente em rajadas, com nada por vinte horas e um pico de cerca de
+\expFindingsMean{} achados por dia simulado é um resumo enganoso: a carga vem
+em rajadas, com nada por vinte horas e um pico de cerca de
 \expAlertPeakHour{} achados em uma única hora, dos quais \expCriticalPerDay{}
 por dia são críticos. Taxas agregadas de falsos positivos dizem pouco sobre se
 uma fila é operável, e a falácia da taxa-base~\cite{axelsson2000baserate} se
@@ -796,10 +793,10 @@ em vez de quatro alertas desconexos.
 
 \subsection{Regras e modelos fazem trabalhos diferentes}
 
-A ablação evidencia um ponto fácil de perder em uma área entusiasmada com
-detecção aprendida: os quatro cenários de maior impacto --- comandos forjados,
-reprodução, escalonamento de privilégio, exfiltração --- são capturados por
-regras determinísticas, imediatamente, sem variância e sem dados de treino. São
+A ablação carrega um ponto que se perde com facilidade em uma área entusiasmada com
+detecção aprendida. Regras determinísticas capturam os quatro cenários de maior
+impacto, a saber comandos forjados, reprodução, escalonamento de privilégio e
+exfiltração, imediatamente, sem variância e sem dados de treino. São
 capturados porque a missão tem uma política explícita (uma etiqueta de
 autenticação deve verificar; um contador não deve repetir; um papel não pode
 emitir este \emph{opcode}) e uma regra é a expressão natural de uma política. A
@@ -821,7 +818,7 @@ tipo Mahalanobis está implantada pode reproduzir quadros antigos não apenas pa
 evadi-la, mas para empurrar o escore de anomalia para baixo enquanto uma falha
 progride.
 
-Acreditamos que a implicação generaliza além do nosso modelo. Qualquer detector
+A implicação aparenta generalizar além do nosso modelo. Qualquer detector
 que ajuste uma distribuição marginal em fase sobre um sistema periódico herda o
 mesmo ponto cego, incluindo detectores consideravelmente mais sofisticados que o
 nosso~\cite{hundman2018lstm,yairi2017datadriven}, a menos que condicionem
@@ -830,11 +827,11 @@ implementar e encorajaríamos seu uso como verificação padrão.
 
 \subsection{Lições de implantação}
 
-As três falhas silenciosas da Seção~\ref{sec:impl} têm a mesma forma: a API de
+As três falhas silenciosas da Seção~\ref{sec:impl} têm uma forma comum. A API de
 nuvem aceitou a requisição, devolveu sucesso e descartou os dados ou a intenção
-de configuração. Uma pipeline de detecção é exatamente o tipo de sistema em que
-tais falhas são invisíveis --- um grupo de \emph{logs} vazio e uma fila silenciosa
-parecem idênticos a um dia tranquilo. Tiramos duas lições. Falhar ruidosamente
+de configuração. Uma pipeline de detecção é justamente o tipo de sistema em que
+tais falhas são invisíveis, porque um grupo de \emph{logs} vazio e uma fila
+silenciosa parecem idênticos a um dia tranquilo. Tiramos duas lições. Falhar ruidosamente
 na aceitação parcial, mesmo quando a API não a considera erro. E testar o
 caminho de nuvem, não apenas a lógica: uma emulação em processo dos serviços de
 nuvem capturou os três defeitos em uma tarde, sem credenciais e sem conta.
@@ -848,16 +845,16 @@ térmicos de primeira ordem; telemetria de bordo real tem não linearidade de
 instrumento, falhas de sensor, deriva sazonal do ângulo beta e idiossincrasia de
 operador que não reproduzimos. Números absolutos devem, portanto, ser lidos como
 propriedades deste corpus, não de uma missão. Os achados comparativos e
-estruturais --- a complementaridade entre regras e modelo, a ordenação dos
-tempos de antecedência, a cegueira à troca de fase, o limiar de cobertura ---
-dependem da \emph{estrutura} dos dados e não de sua fidelidade, e esperamos que
+estruturais (a complementaridade entre regras e modelo, a ordenação dos tempos
+de antecedência, a cegueira à troca de fase e o limiar de cobertura) dependem
+da \emph{estrutura} dos dados e não de sua fidelidade, e esperamos que
 se transfiram; a cifra de precisão, não.
 
 \emph{Os ataques são injetados, não executados.} Nenhum \emph{exploit} executa
 contra infraestrutura real. O adversário também não é adaptativo: não observa o
 detector e se ajusta, que é o pressuposto mais frágil em qualquer avaliação
 estática desse tipo~\cite{sommer2010closedworld}. A sonda de troca de fase é
-nossa única concessão a um adversário adaptativo --- e ela teve êxito.
+nossa única concessão a um adversário adaptativo, e ela teve êxito.
 
 \emph{A granularidade dos rótulos distorce as métricas.} A revocação é por
 evento, de modo que um cenário que rotula 404 eventos e outro que rotula 7 não
@@ -866,8 +863,8 @@ Seção~\ref{sec:results} é comportamento correto do detector pontuado como err
 Relatamos números por cenário para manter isso visível, em vez de resolvê-lo.
 
 \emph{Escopo.} Uma estação, uma espaçonave, uma região. Correlação entre
-estações --- o mesmo endereço de origem tocando duas estações --- é um sinal
-mais forte do que qualquer estação isolada, e não a avaliamos. O estado por
+estações, ou seja, o mesmo endereço de origem tocando duas estações, é um
+sinal mais forte do que qualquer estação isolada, e não a avaliamos. O estado por
 contêiner no detector implantado (janelas de taxa, sequências de anomalia) é
 aderente ao \emph{shard} em vez de garantido; apenas a memória de reprodução é
 tornada globalmente consistente.
@@ -878,8 +875,8 @@ dos quais dependemos, mas não é a AWS: não revela erros de política de
 autorização, cotas de serviço nem consistência eventual. O código de
 infraestrutura tem formatação verificada e foi revisado, mas não foi aplicado
 contra uma conta real, e o custo e a latência da pipeline implantada são,
-portanto, não medidos --- apenas o custo computacional do motor na
-Tabela~\ref{tab:cost} o é.
+portanto, não medidos. Apenas o custo computacional do motor na
+Tabela~\ref{tab:cost} é medido.
 
 \emph{Escopo do modelo.} Avaliamos uma única família de linha de base.
 \emph{Isolation Forests}~\cite{liu2008isolation}, modelos de
@@ -920,7 +917,7 @@ falha não respeitará as marginais, e um adversário respeitará.
 \emph{Metodologia de avaliação de detecção.} A crítica de Sommer e Paxson ao
 aprendizado de máquina para detecção de intrusão~\cite{sommer2010closedworld} e
 a análise de taxa-base de Axelsson~\cite{axelsson2000baserate} moldam como
-relatamos resultados --- por cenário em vez de agregados, falsos positivos sobre
+relatamos resultados: por cenário em vez de agregados, falsos positivos sobre
 eventos benignos e volume de alertas como resultado de primeira classe. Ring et
 al.\ fazem um levantamento dos conjuntos de dados de IDS de
 rede~\cite{ring2019datasets} cuja ausência neste domínio motivou o corpus. A
@@ -945,8 +942,8 @@ esse número. É que regras determinísticas de política, e não detecção apr
 carregam os cenários de maior impacto; que a linha de base aprendida se paga em
 exatamente um dos cinco, onde compra $\expLeadMean$~minutos sobre os próprios
 limites da espaçonave; que sua maquinaria multivariada não supera um detector
-por canal bem calibrado naquele cenário; e que ambos são cegos --- abaixo do
-acaso --- a um adversário que reproduza telemetria válida de outra fase orbital.
+por canal bem calibrado naquele cenário; e que ambos pontuam abaixo do acaso
+contra um adversário que reproduza telemetria válida de outra fase orbital.
 O último achado é estrutural, aplica-se a qualquer linha de base marginal em
 fase e é testável em poucas linhas de código.
 
